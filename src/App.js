@@ -1,4 +1,4 @@
-mport React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import { FiX, FiChevronLeft, FiChevronRight, FiArrowUp, FiMessageSquare } from 'react-icons/fi';
 import { FaTelegramPlane } from 'react-icons/fa';
