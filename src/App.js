@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+mport React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import { FiX, FiChevronLeft, FiChevronRight, FiArrowUp, FiMessageSquare } from 'react-icons/fi';
 import { FaTelegramPlane } from 'react-icons/fa';
+
 
 //================================================================================
 // Reusable Components & Hooks
@@ -44,7 +45,7 @@ const StarsCanvas = React.memo(function StarsCanvas({ count = 240 }) {
   const startedAt = useRef(performance.now());
 
   // Инициализация/ресайз
-  const resize = () => {
+  const resize = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -52,22 +53,23 @@ const StarsCanvas = React.memo(function StarsCanvas({ count = 240 }) {
     const h = window.innerHeight;
     canvas.width = Math.floor(w * dpr);
     canvas.height = Math.floor(h * dpr);
-    canvas.style.width = w + 'px';
-    canvas.style.height = h + 'px';
-    const ctx = canvas.getContext('2d');
+    canvas.style.width = w + "px";
+    canvas.style.height = h + "px";
+    const ctx = canvas.getContext("2d");
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  };
+  }, []);
 
   // Создаём поле звёзд
-  const makeStars = () => {
+  const makeStars = useCallback(() => {
     const w = window.innerWidth;
     const h = window.innerHeight;
     const cx = w / 2;
     const cy = h / 2;
 
-    const amount = Math.round(count * Math.min(1.2, Math.max(0.7, (w * h) / (1280 * 720))));
+    const amount = Math.round(
+      count * Math.min(1.2, Math.max(0.7, (w * h) / (1280 * 720)))
+    );
     const arr = new Array(amount).fill(0).map(() => {
-      // Случайное положение по всему экрану
       const x0 = Math.random() * w;
       const y0 = Math.random() * h;
       const vx = x0 - cx;
@@ -75,40 +77,40 @@ const StarsCanvas = React.memo(function StarsCanvas({ count = 240 }) {
       const baseAngle = Math.atan2(vy, vx);
       const baseRadius = Math.hypot(vx, vy);
 
-      // Индивидуальные параметры
       return {
         baseAngle,
         baseRadius,
-        // Радиус точки + её базовая яркость
         r: 0.6 + Math.random() * 1.4,
         baseAlpha: 0.5 + Math.random() * 0.5,
-        // Угловая скорость (рад/с) — очень медленно
         angVel: (0.005 + Math.random() * 0.02) * (Math.random() < 0.5 ? -1 : 1),
-        // Лёгкая дрожь/орбита
         wobbleAmp: 2 + Math.random() * 6,
         wobbleFreq: 0.2 + Math.random() * 0.7,
         wobblePhase: Math.random() * Math.PI * 2,
-        // Пульсация ореола
         pulseFreq: 0.5 + Math.random() * 0.8,
         pulsePhase: Math.random() * Math.PI * 2,
-        // Случайная лёгкая индивидуальная скорость "вокруг центра"
-        personalSpin: (Math.random() * 0.015) * (Math.random() < 0.5 ? -1 : 1),
-        tint: Math.random(), // для едва заметных цветовых вариаций ореола
+        personalSpin: Math.random() * 0.015 * (Math.random() < 0.5 ? -1 : 1),
+        tint: Math.random(),
       };
     });
     starsRef.current = arr;
-  };
+  }, [count]);
 
   useEffect(() => {
     resize();
     makeStars();
-    window.addEventListener('resize', () => { resize(); makeStars(); });
+
+    const handleResize = () => {
+      resize();
+      makeStars();
+    };
+
+    window.addEventListener("resize", handleResize);
 
     const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext("2d");
 
     const render = (now) => {
-      const t = (now - startedAt.current) / 1000; // секунды
+      const t = (now - startedAt.current) / 1000;
       const w = canvas.clientWidth;
       const h = canvas.clientHeight;
       const cx = w / 2;
@@ -116,36 +118,31 @@ const StarsCanvas = React.memo(function StarsCanvas({ count = 240 }) {
 
       ctx.clearRect(0, 0, w, h);
 
-      // Лёгкая общая (очень медленная) ротация поля
-      const globalAngle = t * 0.003; // ~0.17°/с
+      const globalAngle = t * 0.003;
 
       for (const s of starsRef.current) {
-        // Индивидуальная позиция: базовый вектор + медленный общий поворот + личный спин
-        const angle = s.baseAngle + globalAngle + t * s.angVel + t * s.personalSpin;
+        const angle =
+          s.baseAngle + globalAngle + t * s.angVel + t * s.personalSpin;
         const wobble = s.wobbleAmp * Math.sin(t * s.wobbleFreq + s.wobblePhase);
         const r = Math.max(0, s.baseRadius + wobble);
         const x = cx + Math.cos(angle) * r;
         const y = cy + Math.sin(angle) * r;
 
-        // Пульсация ореола вокруг точки
         const pulse = 0.7 + 0.3 * Math.sin(t * s.pulseFreq + s.pulsePhase);
-        const haloR = (s.r * 6) * pulse;
+        const haloR = s.r * 6 * pulse;
 
-        // Едва заметный цветной ореол (фиолет/бирюза)
-        const hueA = 265; // фиолетовый
-        const hueB = 170; // бирюзовый
+        const hueA = 265;
+        const hueB = 170;
         const hue = hueA * (1 - s.tint) + hueB * s.tint;
 
-        // Ореол
         const g = ctx.createRadialGradient(x, y, 0, x, y, haloR);
         g.addColorStop(0, `hsla(${hue}, 90%, 70%, ${0.05 * s.baseAlpha})`);
-        g.addColorStop(1, 'rgba(0,0,0,0)');
+        g.addColorStop(1, "rgba(0,0,0,0)");
         ctx.fillStyle = g;
         ctx.beginPath();
         ctx.arc(x, y, haloR, 0, Math.PI * 2);
         ctx.fill();
 
-        // Ядро звезды
         ctx.fillStyle = `rgba(255,255,255,${0.85 * s.baseAlpha})`;
         ctx.beginPath();
         ctx.arc(x, y, s.r, 0, Math.PI * 2);
@@ -159,11 +156,13 @@ const StarsCanvas = React.memo(function StarsCanvas({ count = 240 }) {
 
     return () => {
       cancelAnimationFrame(rafRef.current);
+      window.removeEventListener("resize", handleResize);
     };
-  }, [count]);
+  }, [resize, makeStars]);
 
   return <canvas className="starry-canvas" ref={canvasRef} />;
 });
+
 
 //================================================================================
 // Pain Points — 50 штук + аккуратная раскладка
