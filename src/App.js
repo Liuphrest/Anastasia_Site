@@ -699,7 +699,7 @@ const observer = new IntersectionObserver((entries) => {
             >
                 <div className="text-center">
     <h2 className="text-4xl sm:text-5xl font-bold text-white mb-4 text-glow">Сделайте первый шаг</h2>
-    <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">Первый урок‑знакомство — бесплатно. Определим ваш уровень, обсудим цели и составим план.</p>
+    <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">Первый урок-знакомство — бесплатно! Определим ваш уровень, обсудим цели и составим план.</p>
     
     <div className="flex flex-col sm:flex-row items-center justify-center gap-8">
         {/* Левая колонка с номером и кнопкой */}
