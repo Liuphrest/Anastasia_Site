@@ -490,7 +490,7 @@ const observer = new IntersectionObserver((entries) => {
 >
                 <h1 className={`text-xl md:text-2xl font-bold tracking-wide transition-all duration-300 ${
   activeSection === 'home' ? 'name-glow' : 'text-gray-300 hover:text-white'
-}`}>Anastasia Prihodko</h1>
+}`}>Anastasia Prikhodko</h1>
               </motion.div>
               <div className="hidden md:flex items-center space-x-8">
                 <NavLink id="about">Обо мне</NavLink>
